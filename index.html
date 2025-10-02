@@ -3,21 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <title>گالری حرفه‌ای با فیلتر</title>
+  <!-- مهم برای موبایل -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}
     body{
       background:#0f0f0f;color:#fff;display:flex;
       flex-direction:column;align-items:center;
-      min-height:100vh;padding:40px;
+      min-height:100vh;padding:20px;
     }
-    h1{margin-bottom:20px;font-size:2rem;color:#f5f5f5}
+    h1{margin-bottom:20px;font-size:2rem;text-align:center;color:#f5f5f5}
 
     .filter-buttons{
-      display:flex;gap:10px;margin-bottom:20px;flex-wrap:nowrap;overflow-x:auto;
+      display:flex;gap:10px;margin-bottom:20px;
+      flex-wrap:wrap;justify-content:center;
     }
     .filter-buttons button{
-      background:#1a1a1a;color:#fff;border:0;padding:10px 20px;border-radius:25px;
-      cursor:pointer;transition:0.25s;font-size:1rem;white-space:nowrap;
+      background:#1a1a1a;color:#fff;border:0;
+      padding:10px 20px;border-radius:25px;
+      cursor:pointer;transition:0.25s;font-size:1rem;
     }
     .filter-buttons button.active,
     .filter-buttons button:hover{
@@ -26,7 +31,7 @@
 
     .gallery{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
       gap:10px;width:100%;max-width:1200px;
     }
 
@@ -45,28 +50,43 @@
       transition:opacity 0.30s ease, transform 0.30s ease;
     }
     .gallery img.hidden{ display:none !important; }
-
     .gallery img:hover{ transform:scale(1.03) rotate(0.6deg); filter:brightness(1.12) }
 
+    /* Lightbox */
     .lightbox{
       position:fixed;top:0;left:0;width:100%;height:100%;
       background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;
       opacity:0;visibility:hidden;transition:0.3s;
     }
     .lightbox.active{ opacity:1;visibility:visible; }
-    .lightbox img{ max-width:90%;max-height:80%;border-radius:12px; box-shadow:0 0 30px rgba(255,255,255,0.2); }
+    .lightbox img{ max-width:90%;max-height:80%;border-radius:12px; }
     .close,.prev,.next{
-      position:absolute;top:50%;transform:translateY(-50%);font-size:2rem;color:#fff;
-      cursor:pointer;padding:10px 16px;border-radius:50%;background:rgba(255,255,255,0.08);
+      position:absolute;top:50%;transform:translateY(-50%);
+      font-size:2rem;color:#fff;cursor:pointer;
+      padding:10px 16px;border-radius:50%;
+      background:rgba(255,255,255,0.08);
       user-select:none;transition:0.2s;
     }
-    .close{ top:6%; right:5%; transform:none; font-size:2.4rem }
+    .close{ top:8%; right:5%; transform:none; font-size:2.2rem }
     .prev{ left:4%; } .next{ right:4%; }
     .close:hover,.prev:hover,.next:hover{ background:rgba(255,255,255,0.18) }
+
+    /* 📱 Media Queries */
+    @media (max-width: 768px) {
+      h1 { font-size: 1.6rem; }
+      .filter-buttons button { font-size:0.9rem; padding:8px 14px; }
+      .gallery { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    }
+    @media (max-width: 480px) {
+      h1 { font-size: 1.4rem; }
+      .filter-buttons { gap:6px; }
+      .filter-buttons button { font-size:0.8rem; padding:6px 12px; }
+      .gallery { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+    }
   </style>
 </head>
 <body>
-  <h1> گالری تصاویر</h1>
+  <h1>📸 گالری تصاویر با فیلتر</h1>
 
   <div class="filter-buttons">
     <button class="active" data-filter="all">همه</button>
@@ -87,6 +107,7 @@
     <img src="https://picsum.photos/id/1062/600/400" data-category="city" alt="">
   </div>
 
+  <!-- Lightbox -->
   <div class="lightbox" id="lightbox">
     <span class="close" id="close">&times;</span>
     <span class="prev" id="prev">&#10094;</span>
@@ -106,6 +127,7 @@
     const hideTimeouts = new WeakMap();
     const HIDE_MS = 350;
 
+    // نمایش با اسکرول
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if(entry.isIntersecting){
@@ -125,10 +147,7 @@
       lightbox.classList.add('active');
       lightboxImg.src = visibleImgs[currentVisibleIndex].src;
     }
-
-    images.forEach(img => {
-      img.addEventListener('click', () => openLightboxFrom(img));
-    });
+    images.forEach(img => img.addEventListener('click', () => openLightboxFrom(img)));
 
     function showNext(){
       visibleImgs = Array.from(document.querySelectorAll('.gallery img:not(.hidden)'));
@@ -148,6 +167,7 @@
     closeBtn.addEventListener('click', () => lightbox.classList.remove('active'));
     lightbox.addEventListener('click', e => { if(e.target === lightbox) lightbox.classList.remove('active'); });
 
+    // فیلتر دسته‌بندی
     buttons.forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelector('.filter-buttons button.active').classList.remove('active');
@@ -183,6 +203,7 @@
       });
     });
 
+    // کلیدهای کیبورد
     document.addEventListener('keydown', e => {
       if(!lightbox.classList.contains('active')) return;
       if(e.key === 'ArrowRight') showNext();
