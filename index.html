@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>گالری حرفه‌ای با فیلتر</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}
+    body{
+      background:#0f0f0f;color:#fff;display:flex;
+      flex-direction:column;align-items:center;
+      min-height:100vh;padding:40px;
+    }
+    h1{margin-bottom:20px;font-size:2rem;color:#f5f5f5}
+
+    .filter-buttons{
+      display:flex;gap:10px;margin-bottom:20px;flex-wrap:nowrap;overflow-x:auto;
+    }
+    .filter-buttons button{
+      background:#1a1a1a;color:#fff;border:0;padding:10px 20px;border-radius:25px;
+      cursor:pointer;transition:0.25s;font-size:1rem;white-space:nowrap;
+    }
+    .filter-buttons button.active,
+    .filter-buttons button:hover{
+      background:#007bff;box-shadow:0 0 12px rgba(0,123,255,0.45);
+    }
+
+    .gallery{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:10px;width:100%;max-width:1200px;
+    }
+
+    .gallery img{
+      width:100%;border-radius:12px;cursor:pointer;
+      opacity:0;transform:translateY(40px);
+      transition:opacity 0.45s ease, transform 0.45s ease, filter 0.45s ease;
+      filter:brightness(0.85);
+      display:block;
+    }
+    .gallery img.show{
+      opacity:1;transform:translateY(0);filter:brightness(1);
+    }
+    .gallery img.hiding{
+      opacity:0;transform:scale(0.92);
+      transition:opacity 0.30s ease, transform 0.30s ease;
+    }
+    .gallery img.hidden{ display:none !important; }
+
+    .gallery img:hover{ transform:scale(1.03) rotate(0.6deg); filter:brightness(1.12) }
+
+    .lightbox{
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;
+      opacity:0;visibility:hidden;transition:0.3s;
+    }
+    .lightbox.active{ opacity:1;visibility:visible; }
+    .lightbox img{ max-width:90%;max-height:80%;border-radius:12px; box-shadow:0 0 30px rgba(255,255,255,0.2); }
+    .close,.prev,.next{
+      position:absolute;top:50%;transform:translateY(-50%);font-size:2rem;color:#fff;
+      cursor:pointer;padding:10px 16px;border-radius:50%;background:rgba(255,255,255,0.08);
+      user-select:none;transition:0.2s;
+    }
+    .close{ top:6%; right:5%; transform:none; font-size:2.4rem }
+    .prev{ left:4%; } .next{ right:4%; }
+    .close:hover,.prev:hover,.next:hover{ background:rgba(255,255,255,0.18) }
+  </style>
+</head>
+<body>
+  <h1> گالری تصاویر</h1>
+
+  <div class="filter-buttons">
+    <button class="active" data-filter="all">همه</button>
+    <button data-filter="nature">طبیعت</button>
+    <button data-filter="city">شهر</button>
+    <button data-filter="sea">دریا</button>
+  </div>
+
+  <div class="gallery">
+    <img src="https://picsum.photos/id/1015/600/400" data-category="nature" alt="">
+    <img src="https://picsum.photos/id/1016/600/400" data-category="sea" alt="">
+    <img src="https://picsum.photos/id/1018/600/400" data-category="nature" alt="">
+    <img src="https://picsum.photos/id/1020/600/400" data-category="city" alt="">
+    <img src="https://picsum.photos/id/1024/600/400" data-category="sea" alt="">
+    <img src="https://picsum.photos/id/1035/600/400" data-category="city" alt="">
+    <img src="https://picsum.photos/id/1043/600/400" data-category="nature" alt="">
+    <img src="https://picsum.photos/id/1050/600/400" data-category="sea" alt="">
+    <img src="https://picsum.photos/id/1062/600/400" data-category="city" alt="">
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <span class="close" id="close">&times;</span>
+    <span class="prev" id="prev">&#10094;</span>
+    <img id="lightbox-img" src="" alt="">
+    <span class="next" id="next">&#10095;</span>
+  </div>
+
+  <script>
+    const images = Array.from(document.querySelectorAll('.gallery img'));
+    const buttons = document.querySelectorAll('.filter-buttons button');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const closeBtn = document.getElementById('close');
+    const nextBtn = document.getElementById('next');
+    const prevBtn = document.getElementById('prev');
+
+    const hideTimeouts = new WeakMap();
+    const HIDE_MS = 350;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          entry.target.classList.add('show');
+        }
+      });
+    }, {threshold: 0.18});
+    images.forEach(img => observer.observe(img));
+
+    let visibleImgs = [];
+    let currentVisibleIndex = 0;
+
+    function openLightboxFrom(img){
+      visibleImgs = Array.from(document.querySelectorAll('.gallery img:not(.hidden)'));
+      currentVisibleIndex = visibleImgs.indexOf(img);
+      if(currentVisibleIndex === -1) return;
+      lightbox.classList.add('active');
+      lightboxImg.src = visibleImgs[currentVisibleIndex].src;
+    }
+
+    images.forEach(img => {
+      img.addEventListener('click', () => openLightboxFrom(img));
+    });
+
+    function showNext(){
+      visibleImgs = Array.from(document.querySelectorAll('.gallery img:not(.hidden)'));
+      if(visibleImgs.length === 0) return;
+      currentVisibleIndex = (currentVisibleIndex + 1) % visibleImgs.length;
+      lightboxImg.src = visibleImgs[currentVisibleIndex].src;
+    }
+    function showPrev(){
+      visibleImgs = Array.from(document.querySelectorAll('.gallery img:not(.hidden)'));
+      if(visibleImgs.length === 0) return;
+      currentVisibleIndex = (currentVisibleIndex - 1 + visibleImgs.length) % visibleImgs.length;
+      lightboxImg.src = visibleImgs[currentVisibleIndex].src;
+    }
+
+    nextBtn.addEventListener('click', showNext);
+    prevBtn.addEventListener('click', showPrev);
+    closeBtn.addEventListener('click', () => lightbox.classList.remove('active'));
+    lightbox.addEventListener('click', e => { if(e.target === lightbox) lightbox.classList.remove('active'); });
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelector('.filter-buttons button.active').classList.remove('active');
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+
+        images.forEach(img => {
+          if(filter === 'all' || img.dataset.category === filter){
+            if(hideTimeouts.has(img)){
+              clearTimeout(hideTimeouts.get(img));
+              hideTimeouts.delete(img);
+            }
+            img.classList.remove('hidden');
+            requestAnimationFrame(() => {
+              img.classList.add('show');
+              img.classList.remove('hiding');
+            });
+          } else {
+            if(img.classList.contains('hidden')) return;
+            img.classList.remove('show');
+            img.classList.add('hiding');
+            if(hideTimeouts.has(img)){
+              clearTimeout(hideTimeouts.get(img));
+            }
+            const t = setTimeout(() => {
+              img.classList.remove('hiding');
+              img.classList.add('hidden');
+              hideTimeouts.delete(img);
+            }, HIDE_MS);
+            hideTimeouts.set(img, t);
+          }
+        });
+      });
+    });
+
+    document.addEventListener('keydown', e => {
+      if(!lightbox.classList.contains('active')) return;
+      if(e.key === 'ArrowRight') showNext();
+      if(e.key === 'ArrowLeft') showPrev();
+      if(e.key === 'Escape') lightbox.classList.remove('active');
+    });
+  </script>
+</body>
+</html>
